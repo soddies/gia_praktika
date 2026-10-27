@@ -1,0 +1,55 @@
+# Виртуальное окружение
+venv2/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Миграции (опционально - раскомментируйте если нужно)
+# shop/migrations/0*.py
+# !shop/migrations/__init__.py
+
+# Статические файлы (сгенерированные)
+# staticfiles/
+
+# Media файлы (загруженные пользователями)
+# media/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# Testing
+.pytest_cache/
+.tox/
+
+# Build
+*.egg-info/
+dist/
+build/

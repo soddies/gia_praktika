@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заказы - Магазин велосипедов</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+</head>
+<body>
+    <div class="header">
+        <h1>Магазин велосипедов</h1>
+        <div class="user-info">
+            <span>{{ user.full_name }}</span>
+            <span> | </span>
+            <span>{{ user.role_id.role_user }}</span>
+            <a href="{% url 'logout' %}" class="logout-btn">Выйти</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Список заказов</h2>
+        {% if role == 'Администратор' %}
+            <a href="{% url 'order_create' %}" class="add-btn">Добавить заказ</a>
+        {% endif %}
+
+        <div class="orders-container">
+            {% for order in orders %}
+            <div class="order-card">
+                <div class="order-main-info">
+                    <div class="order-row">
+                        <span class="label">Номер заказа:</span>
+                        <span class="value">{{ order.order_id }}</span>
+                    </div>
+                    <div class="order-row">
+                        <span class="label">Статус заказа:</span>
+                        <span class="value">{{ order.status }}</span>
+                    </div>
+                    <div class="order-row">
+                        <span class="label">Адрес пункта выдачи:</span>
+                        <span class="value">
+                            {{ order.pickuppoint_id.city }}, {{ order.pickuppoint_id.street }}, д. {{ order.pickuppoint_id.house|default:'-' }}
+                        </span>
+                    </div>
+                    <div class="order-row">
+                        <span class="label">Дата заказа:</span>
+                        <span class="value">{{ order.order_date }}</span>
+                    </div>
+                    <div class="order-row">
+                        <a href="" class="edit-order">Редактировать</a>
+                        <a href="" class="delete-order">Удалить</a>
+                    </div>
+                </div>
+                
+                <div class="order-delivery-date">
+                    <span class="delivery-label">Дата доставки: </span>
+                    <span class="delivery-value">{{ order.delivery_date }}</span>
+                </div>
+
+                {% if role == 'Администратор' %}
+                <div class="order-actions">
+                    <a href="{% url 'order_update' order.order_id %}" class="edit-btn">Редактировать</a>
+                    <a href="{% url 'order_delete' order.order_id %}" class="delete-btn">Удалить</a>
+                </div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <p class="no-data">Заказы не найдены</p>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

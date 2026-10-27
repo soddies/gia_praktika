@@ -1,0 +1,62 @@
+{%load static%}
+{% for product in products%}
+<div class="product-card {%if product.stock_quantity == 0%}out-ofstock{%endif%} {%if product.discount > 15 %}high-discount{%endif%}">
+    <div class="product-photo-section">
+        {%if product.image_path%}
+            <img src="{% static 'images/'|add:product.image_path %}" alt="{{product.product_name}}" class="product-photo">
+        {%else%}
+            <img src="{% static 'images/picture.png'%}" alt="Нет фото" class="product-photo">
+        {%endif%}
+    </div>
+
+    <div class="product-info-section">
+        <div class="product-header">
+            <span class="product-category">{{ product.category_id.category_name}}</span>
+            <span class="product-separator"> | </span>
+            <span class="product-name">{{product.product_name}}</span>
+        </div>
+
+        <div class="product-details">
+            <p><b>Описание: {{product.description|default:'-'}}</b></p>
+            <p><b>Производитель: {{product.manufacturer_id.manufacturer_name}}</b></p>
+            <p><b>Поставщик: {{product.supplier_id.supplier_name}}</b></p>
+
+            {% if product.discount > 0%}
+                <p><b>Цена: <s style="color:red;">{{product.price}} руб.</s>
+                <span style="color:black;">{{product.final_price}} руб.</span></b></p>
+            {%else%}
+                <p><b>Цена: {{product.price}}</b></p>
+            {%endif%}
+
+            <p><b>Единица: {{product.unit_id.unit_name}}</b></p>
+
+            {% if product.stock_quantity > 0%}
+            <p><b>На складе: {{product.stock_quantity}} шт.</b></p>
+            {%else%}
+            <p style="color: grey;"><b>На складе: отсутствует</b></p>
+            {%endif%}
+        </div>
+    </div>
+
+    <div class="product-discount-section">
+        {% if product.discount > 0%}
+        <div class="discount-badge-large" style="background-color: goldenrod;">
+            <div class="product-discount-more" {% if product.discount > 15%}style="background-color: #483D8B; color: white;" {%endif%}>
+                -{{product.discount}}%
+            </div>
+        </div>
+        {%else%}
+        <div class="no-discount">Нет скидки</div>
+        {%endif%}
+    </div>
+
+    {%if role == 'Администратор'%}
+    <div class="product-action">
+        <button class="edit-btn" data-product-id="{{product.product_id}}">Редактировать</button>
+        <button class="delete-btn" data-product-id="{{product.product_id}}">Удалить</button>
+    </div>
+    {%endif%}
+</div>
+{%empty%}
+<p class="no-products">Товары не найдены или нет подключения с сервером</p>
+{%endfor%}

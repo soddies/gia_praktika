@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Главная страница</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+</head>
+<body>
+    <div class="header">
+        <h1>Магазин велосипедов</h1>
+        <div class="user-info">
+            <span>{{user.full_name}}</span>
+            <span> | </span>
+            <span>{{user.role_id.role_name}}</span>
+            <a href="{% url 'logout' %}" class="logout-btn">Выйти</a>
+        </div>
+    </div>
+    
+    {% if role == 'Администратор' or role == 'Менеджер' %}
+    <div class="control-panel">
+        <form class="filters" method="get">
+            <input type="text" name="search" id="search-input" class="search-input" value="{{ search_query }}" placeholder="Название/артикул">
+
+            <select id="sort-selected" class="filter-select">
+                <option value="">Все значения</option>
+                <option value="stock_quantity" {% if stock_quantity %}selected{% endif %}>По кол-ву на складе</option>
+                <option value="price" {% if price%}selected{% endif %}>По цене</option>
+                <option value="discount" {% if discount %}selected{%endif%}>По действующей скидке</option>
+            </select>
+
+            <select id="sort-order" class="filter-select">
+                <option value="asc" {% if order == 'asc'%}selected{%endif%}>По возрастанию</option>
+                <option value="desc" {% if order == 'desc'%}selected{%endif%}>По убыванию</option>
+            </select>
+
+            <select id="discount-filter" class="filter-select">
+                <option value="">Все диапазоны</option>
+                <option value="0-11.99" {% if discount_filter == '0-11.99'%}selected{%endif%}>0-11.99%</option>
+                <option value="12-18.99" {%if discount_filter == '12-18.99'%}selected{%endif%}>12-18.99%</option>
+                <option value="19+" {%if discount_filter == '19+'%}selected{%endif%}>19% и более</option>
+            </select>
+
+            {% if role == 'Администратор' %}
+                <a href="{% url 'product_add'%}" class="add-product-btn">Добавить товар</a>
+            {%endif%}
+            {% if role == 'Администратор' or role == 'Менеджер' %}
+                <a href="{% url 'orders_list' %}" class="order-btn">Заказы</a>
+            {% endif %}
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="product-container" id="product-container">
+        {% include 'partials/product_list.html' %}
+    </div>
+
+    <div id="delete-modal" class="modal" style="display:flex;">
+        <div class="modal-content">
+            <h3>Подтверждение удаления</h3>
+            <p>Вы уверены что хотите удалить товар?</p>
+            <p class="warning-text">После удаления товар восстановить невозможно</p>
+            <div class="modal-buttons">
+                <button id="confirm-delete" class="btn-danger">Удалить</button>
+                <button id="cancel-delete" class="btn-secondary">Отмена</button>
+            </div>
+        </div>
+    </div>
+        <script>
+        let deleteProductId = null;
+        let searchTimeout = null;
+
+        function loadProducts() {
+            const params = new URLSearchParams({
+                search: document.getElementById('search-input').value,
+                sort: document.getElementById('sort-selected').value,
+                order: document.getElementById('sort-order').value,
+                discount_filter: document.getElementById('discount-filter').value,
+            });
+
+            fetch(`/api/products/?${params.toString()}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('product-container').innerHTML = data.html;
+                    attachEventListeners();
+                })
+                .catch(error => console.error('Ошибка загрузки: ', error));
+        }
+
+        function attachEventListeners() {
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const productId = this.dataset.productId;
+                    window.location.href = `/product/edit/${productId}/`;
+                });
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    deleteProductId = this.dataset.productId;
+                    document.getElementById('delete-modal').style.display = 'flex';
+                });
+            });
+        }
+
+        document.getElementById('search-input').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(loadProducts, 300);
+        });
+
+        document.getElementById('sort-selected').addEventListener('change', loadProducts);
+        document.getElementById('sort-order').addEventListener('change', loadProducts);
+        document.getElementById('discount-filter').addEventListener('change', loadProducts);
+
+        document.getElementById('confirm-delete').addEventListener('click', function() {
+            fetch(`/product/delete/${deleteProductId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('delete-modal').style.display = 'none';
+                    deleteProductId = null;
+                    loadProducts(); 
+                } else {
+                    alert(data.error || 'Ошибка удаления');
+                    document.getElementById('delete-modal').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                alert('Ошибка соединения с сервером');
+                console.error(error);
+            });
+        });
+
+        document.getElementById('cancel-delete').addEventListener('click', function() {
+            document.getElementById('delete-modal').style.display = 'none';
+            deleteProductId = null;
+        });
+
+        document.getElementById('delete-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+                deleteProductId = null;
+            }
+        });
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) {
+                return parts.pop().split(';').shift();
+            }
+        }
+
+        attachEventListeners();
+    </script>
+</body>
+</html>
